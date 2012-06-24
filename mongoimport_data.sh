@@ -8,5 +8,5 @@ mongoimport -d $dbname -c tpt --type json --file data/trainPostsThin.json
 
 # Create indexes
 
-echo "mongo create index statement..." | mongo $dbname
+#echo "mongo create index statement..." | mongo $dbname
 

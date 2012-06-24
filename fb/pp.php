@@ -1,0 +1,1 @@
+This is a privacy policy - but we really don't record any data.

@@ -1,5 +1,5 @@
 from pymongo import Connection
-from pymongo.objectid import ObjectId
+from bson.objectid import ObjectId #latest version of pymongo doesn't have objectid
 
 conn = Connection()
 db = conn['kaggle-wp']

@@ -22,7 +22,7 @@ def get_posts_for_users():
             uids = (p['uid'] for p in posts_cursor.next()['likes'])
             yield (user['uid'], post_id, uids)
 
-
+#def count_users(
 
 
 
@@ -32,11 +32,4 @@ def get_posts_for_users():
 #def get_all_for(collection, embedded_field):
     #f1, f2 = embedded_field.split('.', 1)
     #collection.find({f1
-
-
-
-
-
-
-
 

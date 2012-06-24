@@ -10,15 +10,17 @@ def get_posts_for_users():
       {u'post_id': u'1664133'},
       {u'post_id': u'1724823'},
       {u'post_id': u'130559'},
-      {u'post_id': u'1855905'}]}]
+      {u'post_id': u'1855905'}],
+     u'uid': u'30629226'}]
 
-    #users = db.tu.find({}, {'likes.post_id': 1}) #TODO: ENABLE
+    #users = db.tu.find({}, {'uid': 1, 'likes.post_id': 1}) #TODO: ENABLE
     for user in users:
-        posts = (p['post_id'] for p in user['likes'])
-        for post in posts:
-            uids = db.tpt.find({'post_id': post}, {'likes.uid': 1})
-            uids = (p['uid'] for p in uids)
-            yield (user['uid'], post, uids)
+        post_ids = (p['post_id'] for p in user['likes'])
+
+        for post_id in post_ids:
+            posts_cursor = db.tpt.find({'post_id': post_id}, {'likes.uid': 1})
+            uids = (p['uid'] for p in posts_cursor.next()['likes'])
+            yield (user['uid'], post_id, uids)
 
 
 

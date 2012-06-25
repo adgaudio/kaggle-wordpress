@@ -1,5 +1,6 @@
 from pymongo import Connection
 from bson.objectid import ObjectId #latest version of pymongo doesn't have objectid
+from collections import Counter
 
 conn = Connection()
 db = conn['kaggle-wp']
@@ -19,12 +20,15 @@ def get_posts_for_users():
 
         for post_id in post_ids:
             posts_cursor = db.tpt.find({'post_id': post_id}, {'likes.uid': 1})
-            uids = (p['uid'] for p in posts_cursor.next()['likes'])
+            uids = (p['uid'] for p in posts_cursor.next()['likes'] if not p['uid'] == user['uid'])
             yield (user['uid'], post_id, uids)
 
-#def count_users(
+userCount = Counter()
+for (userid,postid,users) in get_posts_for_users():
+    for user in users:
+        userCount[user] += 1
 
-
+print userCount
 
 
 #get_all_for(db.tu, 'likes.post_id')

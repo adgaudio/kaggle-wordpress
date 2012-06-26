@@ -7,7 +7,12 @@ db = conn['kaggle-wp']
 
 def score_likes_by(uids=['30629226']):
     cur = db.tpt.find({'likes.uid': {'$in': uids}}, {'post_id': 1, 'likes.uid': 1})
-    posts = sorted(((len(x['likes']), x['post_id']) for x in cur), reverse=True) # slow and stupid
+    cur.batch_size(5000)
+
+    uids = set(uids)
+    # slow and stupid scoring
+    posts = ((len([uids.intersection(y['uid']) for y in x['likes']]), x['post_id']) for x in cur)
+    posts = sorted(posts, reverse=True) 
     return posts
 #print score_likes_by()
 
@@ -22,6 +27,7 @@ def get_neighbors_for(user = {
 
     post_ids = [ p['post_id'] for p in user['likes'] ]
     posts_liked_by_user = db.tpt.find({'post_id': {'$in': post_ids}}, {'likes.uid': 1})
+    posts_liked_by_user.batch_size(5000)
     uids = [ like['uid'] for post in posts_liked_by_user for like in post['likes'] ]
     return uids
 #print list(get_neighbors_for())

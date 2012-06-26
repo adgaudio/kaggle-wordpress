@@ -8,5 +8,6 @@ mongoimport -d $dbname -c tpt --type json --file data/trainPostsThin.json
 
 # Create indexes and preliminary data munging
 #echo "create count of likes in tpt..." | mongo $dbname
+echo "db.tpt.ensureIndex({'likes.uid': 1});" | mongo $dbname
 echo "db.tpt.ensureIndex({post_id: 1});" | mongo $dbname
 

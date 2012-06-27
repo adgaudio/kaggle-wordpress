@@ -1,19 +1,30 @@
 from pymongo import Connection
 from pymongo.helpers import bson
 
+from collections import Counter
+
 conn = Connection()
 db = conn['kaggle-wp']
 
 
-def score_likes_by(uids=['30629226']):
-    cur = db.tpt.find({'likes.uid': {'$in': uids}}, {'post_id': 1, 'likes.uid': 1})
-    cur.batch_size(5000)
+#def score_likes_by(uids=['30629226']):
+    #"""Given neighbors, find posts they liked and score posts by most popular"""
+    #cur = db.tpt.find({'likes.uid': {'$in': uids}}, {'post_id': 1, 'likes.uid': 1})
+    #cur.batch_size(5000)
 
-    uids = set(uids)
-    # slow and stupid scoring
-    posts = ((len([uids.intersection(y['uid']) for y in x['likes']]), x['post_id']) for x in cur)
-    posts = sorted(posts, reverse=True) 
-    return posts
+    #uids = set(uids)
+    ## slow and stupid scoring
+    #posts = ((len([uids.intersection(y['uid']) for y in x['likes']]), x['post_id']) for x in cur)
+    #posts = sorted(posts, reverse=True) 
+    #return posts
+
+def score_likes_by(uids=['30629226']):
+    """Given neighbors, find posts they liked and score posts by most frequently occurring"""
+    cur = db.tu.find({'uid': {'$in': uids}}, {'likes.post_id': 1})
+    post_ids = (like['post_id'] for user in cur for like in user['likes'])
+    histogram = Counter(post_ids)
+    return histogram
+
 #print score_likes_by()
 
 def get_neighbors_for(user = {
@@ -32,27 +43,22 @@ def get_neighbors_for(user = {
     return uids
 #print list(get_neighbors_for())
 
-def main():
+def main(use_test=True):
     """Collaborative filtering algorithm"""
     recommended_posts = {}
-    users = db.tu.find({}, {'uid': 1, 'likes.post_id': 1}) #TODO: ENABLE
+    users = db.tu.find({'inTestSet': use_test or {'$in': [True, False]}}, {'uid': 1, 'likes.post_id': 1})
     for n, user in enumerate(users):
         uids = get_neighbors_for(user)
+        print uids
         posts = score_likes_by(uids)
+        print len(posts)
         recommended_posts[user['uid']] = posts
-        if n > 3:
+        if n > 40:
             break
     return recommended_posts
 d = main()
 print "check variable d"
 
-
-
-#get_all_for(db.tu, 'likes.post_id')
-
-#def get_all_for(collection, embedded_field):
-    #f1, f2 = embedded_field.split('.', 1)
-    #collection.find({f1
 
 
 #visually check data in main()

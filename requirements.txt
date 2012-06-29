@@ -1,0 +1,13 @@
+# may need to manually install monary, cython and numexpr
+
+-e hg+ssh://hg@bitbucket.org/djcbeach/monary@e5b54a49d08bcbfcb7a1a7f503fd569f1c99a711#egg=Monary-dev
+pymongo
+numpy
+pandas
+ipython
+pyzmq
+matplotlib
+
+#numexpr
+#cython
+#tables

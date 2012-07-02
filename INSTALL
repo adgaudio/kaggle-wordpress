@@ -1,0 +1,56 @@
+#####
+# Install notes for this project.  Assumes you're using ubuntu.
+# See requirements.txt for all python modules used.
+#####
+
+PROJECT_NAME=EXAMPLE
+
+sudo apt-get install git gfortran g++
+sudo apt-get install python-dev python-pip
+
+# Setup VirtualEnv
+sudo apt-get python-virtualenv
+pip install virtualenvwrapper
+source /usr/local/bin/virtualenvwrapper.sh
+#export WORKON_HOME=$HOME/.virtualenvs
+mkvirtualenv $PROJECT_NAME
+workon $PROJECT_NAME
+
+# numpy,scipy, math libraries
+pip install numpy scipy
+
+
+# matplotlib dependencies
+sudo apt-get build-dep python-matplotlib
+pip install matplotlib
+
+
+
+# IPython + goodies
+pip install IPython
+sudo apt-get install qt4-dev-tools
+pip install sip
+cd `virtualenvwrapper_derive_workon_home`/$PROJECT_NAME/build/sip
+python configure.py
+make
+make install
+pip install pyqt
+cd `virtualenvwrapper_derive_workon_home`/$PROJECT_NAME/build/pyqt
+python configure.py
+make
+make install
+sudo apt-get install libzmq-dev
+pip install tornado pygments pyzmq
+
+# pandas
+# pip install nose cython
+pip install -e git+https://github.com/wesm/pandas#egg=pandas
+pip install -e git+https://github.com/statsmodels/statsmodels#egg=statsmodels
+
+# cleanup
+cd `virtualenvwrapper_derive_workon_home`/$PROJECT_NAME
+rm -rf build
+
+
+# Project Specific code
+sh mongoimport.sh

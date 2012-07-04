@@ -1,0 +1,5 @@
+proj_name=monary2
+if [ "${VIRTUAL_ENV##*/}" != "$proj_name" ] 
+then
+  workon "$proj_name"
+fi

@@ -1,0 +1,51 @@
+Users and Post likes:
+  Test users (15041) are a lot more active than non test users
+  Describing the test users,
+  count    15041.000000 # num test users
+  mean        62.324048 # avg num post likes
+  std        332.515311
+  min          3.000000
+  25%          6.000000
+  50%         14.000000 # median num post likes
+  75%         39.000000
+  max      23033.000000
+
+  Describing non test users,
+  count    64960.000000
+  mean         3.514886
+  std         52.116862
+  min          1.000000
+  25%          1.000000
+  50%          1.000000
+  75%          2.000000
+  max       8842.000000
+
+  >>> to repeat:
+      df = main.get_tu()
+      g = df.groupby(df.uid)
+      gg = g.agg({'blog': len, 'inTestSet': sum})
+      gg.blog[gg.inTestSet <1].describe()
+      gg.blog[gg.inTestSet <1].describe()
+
+
+Test users represent 20% of the test set, but account for 24% of all likes
+
+
+
+most popular blogs:
+df.blog.value_counts()
+users with most likes
+df.uid.value_counts()
+most popular posts:
+df.post_id.value_counts()
+
+  >>> df = main.get_tu()
+  Note: there are (1_221_166????) distinct posts, only 366619.000000 of which
+are referenced by users (ie df.post_id.value_counts().count())
+
+
+...
+in prog...
+Q1: Does a user prefer posts from a particular blog?
+
+uids.agg({'blog':lambda x:len(x.value_counts()), 'post_id': lambda x:len(x.value_counts())})

@@ -9,8 +9,8 @@ def unwind_likes_from(dct):
     likes = dct.pop('likes')
     for like in likes:
         like.update(dct)
-        like = cast_vals_to_int(like)
-        yield like
+        like = cast_vals_to_int(like)[0]
+    return likes
 
 def cast_vals_to_int(dct):
     for k in dct:
@@ -23,26 +23,38 @@ def cast_vals_to_int(dct):
                     dct[k] = datetime.datetime.strptime(dct[k], '%Y-%m-%d %H:%M:%S')
                 except:
                     pass
-    yield dct
+    return [ dct ]
+
+def insert(collection, data):
+    try:
+        collection.insert(data)
+    except:
+        print 'failed batch insert... inserting individually'
+        for x in data:
+            collection.insert(x)
+    return len(data)
 
 def data_munge(old_coll, db, new_coll, strategy=unwind_likes_from):
     new_coll.drop()
     cur = old_coll.find()
     #cur.batch_size(5000)
     new_data = []
+    total = 0
     for n, elem in enumerate(cur):
-        new_data.extend([x for x in strategy(elem)])
+        new_data.extend(strategy(elem))
 
-        if (n) % 5000 == 0:
-            print len(new_data)
+        if (n) % 5000 == 0 and n != 0:
+            cnt = insert(new_coll, new_data)
+            total += cnt
             print 'batch inserting'
-            try:
-                new_coll.insert(new_data)
-            except:
-                print 'failed batch insert... inserting individually'
-                for x in new_data:
-                    new_coll.insert(x)
+            print cnt
             new_data = []
+    cnt = insert(new_coll, new_data)
+    total += cnt
+    print 'batch inserting'
+    print cnt
+    print '\n---\ntotal inserted:'
+    print total
 
 def create_tu2(db):
     data_munge(db.tu, db, db.tu2)

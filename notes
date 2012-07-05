@@ -39,9 +39,9 @@ df.uid.value_counts()
 most popular posts:
 df.post_id.value_counts()
 
-  >>> df = main.get_tu()
-  Note: there are (1_221_166????) distinct posts, only 366619.000000 of which
-are referenced by users (ie df.post_id.value_counts().count())
+  >>> to repeat:  df = main.get_tu()
+  Note: all 380804 distinct posts are referenced by users 
+  (ie number distinct post ids in tu collection is: df.post_id.value_counts().count())
 
 
 ...

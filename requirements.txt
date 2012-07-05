@@ -1,5 +1,10 @@
 # Many of these may need you to manually run configure, make and make install
 
+
+######
+# Scientific Tools
+######
+
  numpy
 scipy
 
@@ -25,3 +30,11 @@ pymongo
 #numexpr
 #cython
 #tables
+
+nltk
+
+
+######
+# Other
+######
+beautifulsoup

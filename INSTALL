@@ -47,6 +47,10 @@ pip install tornado pygments pyzmq
 pip install -e git+https://github.com/wesm/pandas#egg=pandas
 pip install -e git+https://github.com/statsmodels/statsmodels#egg=statsmodels
 
+#nltk
+#sudo apt-get install wordnet-dev
+pip install nltk
+
 # cleanup
 cd `virtualenvwrapper_derive_workon_home`/$PROJECT_NAME
 rm -rf build

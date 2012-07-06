@@ -1,7 +1,7 @@
 from pylab import plot, subplot, draw
 #ion()
 
-import monary
+from monary import Monary
 from numpy import matrix
 from pandas import DataFrame
 from pymongo import Connection
@@ -18,7 +18,7 @@ DBNAME = 'kaggle-wp'
 
 def get_monary(conn=None, dbname=DBNAME, _cache={}):
     if dbname not in _cache:
-        _cache[dbname] = conn or monary.Monary()
+        _cache[dbname] = conn or Monary()
     return [_cache[dbname], dbname]
 
 def get_pymongo(dbname=DBNAME, _cache={}, *args, **kwargs):
@@ -72,6 +72,16 @@ def subplots(grid=[2,2], clear_subplot=True):
     return coroutine
 
 #####
+# Tools
+#####
+def limited(generator, num_iters=10):
+    """Limit a generator to num_iters"""
+    for n,x in enumerate(generator):
+        if n >= num_iters:
+            break
+        yield x
+
+#####
 # Analyzing post content
 #####
 def get_parsed_content(yield_with_post_id=False, **pymongo_find_kwargs):
@@ -84,6 +94,43 @@ def get_parsed_content(yield_with_post_id=False, **pymongo_find_kwargs):
         if yield_with_post_id:
             yield (post_data['post_id'], parsed)
         else: yield parsed
+
+def most_popular_posts(df = None, db = None, yield_with_post_id=False):
+    """Yields post_ids sorted by most likes"""
+    if not df: df = get_tu()
+    if not db: db = get_pymongo()
+    post_ids = df.post_id.value_counts().index
+    for pid in post_ids:
+        content = db.tp2.find_one({'post_id': pid}, fields=['content'])['content']
+        parsed = BeautifulSoup(content)
+        if yield_with_post_id: 
+            yield (pid, parsed)
+        else: yield parsed
+
+
+#gen = most_popular_posts()
+#for x in limited(gen):
+def describe_content_tags():
+    print 'find most popular tags in the first XXX most popular posts'
+    gen = most_popular_posts()
+    dist = nltk.FreqDist(tag.name 
+            for parsed in limited(gen, 1000)
+            for tag in parsed.findAll())
+    dist.plot()
+
+    print 'count # youtube links in first XXX most popular posts'
+    gen = most_popular_posts()
+    num_youtube_links = []
+    for parsed in limited(gen, 1000):
+        for tag in parsed.findAll('a'):
+            url = dict(tag.attrs).get('href', '')
+            if 'youtube' in url:
+                print url
+        #aggregate.  seriously, I'm being tired and lazy...
+        num_youtube_links.append(sum(1
+            for tag in parsed.findAll('a') 
+            if 'youtube' in dict(tag.attrs).get('href', '')))
+    return num_youtube_links
 
 def tokenize_words(parsed):
     words = nltk.word_tokenize(parsed.text)

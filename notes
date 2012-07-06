@@ -33,18 +33,22 @@ Test users represent 20% of the test set, but account for 24% of all likes
 
 
 most popular blogs:
-df.blog.value_counts()
-users with most likes
-df.uid.value_counts()
-most popular posts:
-df.post_id.value_counts()
+  df.blog.value_counts()
+  users with most likes
+  df.uid.value_counts()
+  most popular posts:
+  df.post_id.value_counts()
 
-  >>> to repeat:  df = main.get_tu()
-  Note: all 380804 distinct posts are referenced by users 
-  (ie number distinct post ids in tu collection is: df.post_id.value_counts().count())
+    >>> to repeat:  df = main.get_tu()
+    Note: all 380804 distinct posts are referenced by users
+    (ie number distinct post ids in tu collection is: df.post_id.value_counts().count())
+    Note: the post in the 75th percentile only has 3 likes! (df.post_id.value_counts.describe()) and 90th percentile has 26 likes
 
-
-...
+Post Content:
+  most popular tags in the 10_000 most popular posts:
+{u'a': 45414, u'p': 44467, u'img': 29408, u'span': 28302, 
+u'strong': 28092, u'em': 17870, u'li': 7819, u'h3': 4466, u'div': 2857, u'br': 1292, u'h5': 1152, u'ul': 992, u'h2': 808, u'h1': 807, u'blockquote': 754, u'h4': 620, u'td': 520, u'address': 460, u'font': 437, u'h6': 400, u'del': 275, u'sup': 255, u'tr': 250, u'ol': 249, u'hr': 177, u'u': 158, u'cite': 73, u'table': 68, u'tbody': 68, u'dt': 52, u'dl': 51, u'small': 48, u'dd': 43, u'pre': 40, u'i': 20, u'code': 18, u'big': 15, u'b': 13, u'th': 12, u'header': 10, u'sub': 8, u's': 7, u'col': 3, u'abbr': 2, u'tt': 1, u'tfoot': 1, u'var': 1, u'thead': 1, u'strike': 1, u'footer': 1, u'q': 1}
+..
 in prog...
 Q1: Does a user prefer posts from a particular blog?
 

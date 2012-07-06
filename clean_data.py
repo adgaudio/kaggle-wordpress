@@ -56,6 +56,19 @@ def data_munge(old_coll, db, new_coll, strategy=unwind_likes_from):
     print '\n---\ntotal inserted:'
     print total
 
+def test_tp2():
+    assert db.tp.count() == db.tp2.count() # no unwinding of likes here
+    assert len(db.tp2.distinct('post_id')) == db.tp2.count()
+    assert isinstance(db.tp2.find_one()['author'], int)
+    assert isinstance(db.tp2.find_one()['date'], datetime.datetime)
+    print "tp2 tests pass"
+
+def test_tu2():
+    assert db.tu.count() == len(db.tu2.distinct('uid'))
+    assert isinstance(db.tu2.find_one()['blog'], int)
+    assert isinstance(db.tu2.find_one()['like_dt'], datetime.datetime)
+    print "tu2 tests pass"
+
 def create_tu2(db):
     data_munge(db.tu, db, db.tu2)
 
@@ -68,6 +81,8 @@ def create_tp2(db):
 if __name__ == '__main__':
     print 'creating collection tu2'
     print create_tu2(db)
+    test_tu2()
     print
     print 'creating collection tpt2'
     print create_tp2(db)
+    test_tp2()

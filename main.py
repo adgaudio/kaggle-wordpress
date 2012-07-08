@@ -1,8 +1,8 @@
-from pylab import plot, subplot, draw
-#ion()
+from pylab import plot, subplot, draw, ion
+ion()
 
 from monary import Monary
-from numpy import matrix
+import numpy
 from pandas import DataFrame
 from pymongo import Connection
 
@@ -26,12 +26,15 @@ def get_pymongo(dbname=DBNAME, _cache={}, *args, **kwargs):
         _cache[dbname] = Connection(*args, **kwargs)[dbname]
     return _cache[dbname]
 
-def get_tu():
-    conn, dbname = get_monary()
-    columns = ['blog', 'inTestSet', 'post_id', 'uid', 'like_dt']
-    arrs = conn.query(dbname, 'tu2', {}, columns, ['int32']*4+['date'])
-    df = matrix(arrs).transpose()
-    return DataFrame(df, columns = columns)
+def get_tu(_cache=[]):
+    if not _cache:
+        conn, dbname = get_monary()
+        columns = ['blog', 'inTestSet', 'post_id', 'uid', 'like_dt']
+        arrs = conn.query(dbname, 'tu2', {}, columns, ['int32']*4+['date'])
+        df = numpy.matrix(arrs).transpose()
+        df = DataFrame(df, columns = columns)
+        _cache.append(df)
+    return _cache[0].copy(deep=True)
 
 def get_tp(conn=None):
     conn, dbname = get_monary()
@@ -75,7 +78,9 @@ def subplots(grid=[2,2], clear_subplot=True):
 # Tools
 #####
 def limited(generator, num_iters=10):
-    """Limit a generator to num_iters"""
+    """Limit a generator to num_iters. 
+    If num_iters == None, assume infinite generator"""
+    if num_iters == None: num_iters = float('inf')
     for n,x in enumerate(generator):
         if n >= num_iters:
             break
@@ -95,42 +100,52 @@ def get_parsed_content(yield_with_post_id=False, **pymongo_find_kwargs):
             yield (post_data['post_id'], parsed)
         else: yield parsed
 
-def most_popular_posts(df = None, db = None, yield_with_post_id=False):
-    """Yields post_ids sorted by most likes"""
+def most_popular_content(df = None, db = None, yield_with_post_id=False, _cache={}):
+    """Yields parsed content of posts sorted by most likes"""
     if not df: df = get_tu()
     if not db: db = get_pymongo()
-    post_ids = df.post_id.value_counts().index
+    if 'value_counts().index' not in _cache:
+        _cache['value_counts().index'] = df.post_id.value_counts().index
+    post_ids = _cache['value_counts().index']
+
     for pid in post_ids:
-        content = db.tp2.find_one({'post_id': pid}, fields=['content'])['content']
+        content = db.tp2.find({'post_id': {'$in':post_ids}}, fields=['content'])
         parsed = BeautifulSoup(content)
         if yield_with_post_id: 
             yield (pid, parsed)
         else: yield parsed
 
-
-#gen = most_popular_posts()
-#for x in limited(gen):
-def describe_content_tags():
-    print 'find most popular tags in the first XXX most popular posts'
-    gen = most_popular_posts()
+def describe_content_html_tags(num=1000, plot_=True):
+    """find frequency distribution of html tags
+    in the first XXX most popular posts"""
+    gen = most_popular_content()
     dist = nltk.FreqDist(tag.name 
-            for parsed in limited(gen, 1000)
+            for parsed in limited(gen, num)
             for tag in parsed.findAll())
-    dist.plot()
+    if plot_: dist.plot()
+    return dist
 
+def _count_youtube_links(num, plot_=True):
     print 'count # youtube links in first XXX most popular posts'
-    gen = most_popular_posts()
-    num_youtube_links = []
-    for parsed in limited(gen, 1000):
+    gen = most_popular_content()
+    num_youtube_links = numpy.zeros(num)
+    for n, parsed in enumerate(limited(gen, num)):
+        #debug:
         for tag in parsed.findAll('a'):
             url = dict(tag.attrs).get('href', '')
             if 'youtube' in url:
                 print url
-        #aggregate.  seriously, I'm being tired and lazy...
-        num_youtube_links.append(sum(1
+        num_youtube_links[n] = sum(1
             for tag in parsed.findAll('a') 
-            if 'youtube' in dict(tag.attrs).get('href', '')))
+            if 'youtube' in dict(tag.attrs).get('href', ''))
+    if plot_: plot(num_youtube_links) # hopefully this looks like a normal distribution
     return num_youtube_links
+
+def describe_content(num=1000):
+    dist=describe_content_html_tags(num)
+    num_youtube_links = _count_youtube_links(num)
+    return dist, num_youtube_links
+
 
 def tokenize_words(parsed):
     words = nltk.word_tokenize(parsed.text)

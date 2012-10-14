@@ -1,5 +1,5 @@
-from pylab import plot, subplot, draw, ion
-ion()
+import pylab
+pylab.ion()
 
 from monary import Monary
 import numpy
@@ -46,33 +46,56 @@ def get_tp(conn=None):
 #####
 # Plotting
 #####
-def subplots(grid=[2,2], clear_subplot=True):
-    """ Iteratively draw pylab subplots in a grid
-    Ex:
+def subplots(grid=[2,2], figure_index=1, clear_subplot=True):
+    """ Iteratively draw pylab subplots in a grid.
+    You may need to set pylab.ion() to do this interactively
+    Examples:
 
     >>> import pylab ; pylab.ion()
     >>> p = subplots(grid=[1,2])
     >>> for x in range(5):
             p.send([range(10), range(10), 'r-'])
-            p.send([[1,2,3], [1,3,2], 'b^'])
+            p.send({'args':[[1,2,3], [1,3,2]],
+                    'kwargs': {'marker': 'o', 'color': 'green'}})
             subplt = p.send([range(10), range(10), 'b^'])
             subplt.set_title('hello') ; pylab.draw()
     """
     # initialized coroutine by wrapping in closure
     def _subplots():
+        pylab.figure(figure_index)
         n = -1
         ax = None
         while True:
             n = (n+1) % (grid[0] * grid[1])
-            subplot_args = grid + [n]
-            plot_args = (yield ax)
-            ax = subplot(*subplot_args)
+            grid_size_w_index = grid + [n]
+
+            plot_params = (yield ax)
+            if isinstance(plot_params, dict):
+                plot_kwargs = plot_params.get('kwargs', {})
+                plot_args = plot_params.get('args', ())
+            else:
+                plot_args = plot_params
+                plot_kwargs = {}
+            ax = pylab.subplot(*grid_size_w_index)
             if clear_subplot: ax.clear()
-            plot(*plot_args)
-            draw()
+            pylab.plot(*plot_args, **plot_kwargs)
+            pylab.draw()
     coroutine = _subplots()
     coroutine.next()
     return coroutine
+
+def plot_labeled_histogram(dist, fig):
+    """Create labeled histograms using subplots()
+    Given a dict or nltk.FreqDist. Yea, this is ridiculous :)"""
+    tag_ids = {}
+    for key in dist.keys():
+        tag_ids[key] = len(tag_ids)
+    x = [tag_ids[key] for key in dist.keys()]
+    y = dist.values()
+    fig.send({'args':( x, y ), 'kwargs': {'linestyle':'', 'marker':'^'}})
+    pylab.xticks([tag_ids[key] for key in dist.keys()], 
+            [key for key in dist.keys()],
+            rotation=90)
 
 #####
 # Tools
@@ -109,21 +132,29 @@ def most_popular_content(df = None, db = None, yield_with_post_id=False, _cache=
     post_ids = _cache['value_counts().index']
 
     for pid in post_ids:
-        content = db.tp2.find({'post_id': {'$in':post_ids}}, fields=['content'])
+        try:
+            content = db.tp2.find_one({'post_id': pid}, fields=['content'])['content']
+        except:
+            print "pid %s exists in tu but not in tp" % pid
+            continue
         parsed = BeautifulSoup(content)
         if yield_with_post_id: 
-            yield (pid, parsed)
+            yield ( pid, parsed )
         else: yield parsed
 
-def describe_content_html_tags(num=1000, plot_=True):
+def describe_content_html_tags(batch_size=1000, num_batches=4, plot_=True):
     """find frequency distribution of html tags
     in the first XXX most popular posts"""
     gen = most_popular_content()
-    dist = nltk.FreqDist(tag.name 
-            for parsed in limited(gen, num)
-            for tag in parsed.findAll())
-    if plot_: dist.plot()
-    return dist
+    if plot_: fig = subplots([2,1])
+    dists = []
+    for _ in range(num_batches):
+        dist = nltk.FreqDist(tag.name 
+                for parsed in limited(gen, batch_size)
+                for tag in parsed.findAll())
+        if plot_: plot_labeled_histogram(dist, fig)
+        dists.append(dist)
+    return dists
 
 def _count_youtube_links(num, plot_=True):
     print 'count # youtube links in first XXX most popular posts'
@@ -138,7 +169,7 @@ def _count_youtube_links(num, plot_=True):
         num_youtube_links[n] = sum(1
             for tag in parsed.findAll('a') 
             if 'youtube' in dict(tag.attrs).get('href', ''))
-    if plot_: plot(num_youtube_links) # hopefully this looks like a normal distribution
+    if plot_: pylab.plot(num_youtube_links) # hopefully this looks like a normal distribution
     return num_youtube_links
 
 def describe_content(num=1000):
